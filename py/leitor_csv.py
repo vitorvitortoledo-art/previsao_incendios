@@ -2,7 +2,7 @@ import pandas as pd
 import os
 
 def ler_csvs_inbe():
-    pasta = r'C:\Users\vitor\OneDrive\Documentos\Github\previsao_incendio\dados'
+    pasta = r'C:\Users\vitor\OneDrive\Documentos\Github\previsao_incendios\dados'
     arquivos = os.listdir(pasta)
     dfs = []
 
