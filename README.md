@@ -11,7 +11,6 @@
 
 </div>
 
-
 ---
 
 ## Sobre o projeto
@@ -20,7 +19,6 @@ O **SEIVA** pega os dados públicos de focos de queimada do INPE (BDQueimadas), 
 
 O valor não está em *detectar* fogo, mas em **antecipar e priorizar** a ação de quem precisa decidir com recursos limitados.
 
----
 
 ## O problema
 
@@ -34,7 +32,6 @@ Esse é o **"último quilômetro" do dado**: a informação existe, mas não che
 - Em 2024, a área queimada no Brasil cresceu cerca de 79% em relação a 2023, potencializada pela seca extrema do El Niño (MapBiomas Fogo, 2025).
 - Estudo publicado na *Science* (Lapola et al., 2023) estima que cerca de 38% da floresta amazônica remanescente já sofre algum tipo de degradação, somando fogo, efeito de borda, extração de madeira e seca extrema.
 
----
 
 ## Público-alvo
 
@@ -42,7 +39,6 @@ Esse é o **"último quilômetro" do dado**: a informação existe, mas não che
 - **Coordenação estadual:** quem precisa distribuir brigadistas e recursos escassos entre muitos municípios e se beneficia do ranking de priorização.
 - **Defesa Civil, Corpo de Bombeiros, ICMBio e ONGs ambientais locais:** atores que atuam de forma integrada na prevenção e no combate.
 
----
 
 ## A solução e onde se encaixa
 
@@ -65,19 +61,6 @@ O INPE já oferece o **Risco de Fogo (RF)**, um indicador meteorológico robusto
 
 > *"O Risco de Fogo do INPE oferece a base. O SEIVA oferece a camada de decisão. Não substituímos o que já existe, começamos exatamente onde ele termina, transformando informação técnica em ação para quem precisa proteger o território e não tem equipe especializada."*
 
----
-
-## Features do modelo
-
-| Variável | Por que entra |
-|---|---|
-| **Focos nas semanas anteriores** | Tendência recente — fogo tende a puxar mais fogo na mesma região |
-| **Mês / estação (sazonalidade)** | O fogo é fortemente sazonal; a estação seca concentra a maioria dos focos |
-| **Média histórica do município** | Calibra o que é "normal" para aquele município naquela época do ano |
-| **Área do município** | Corrige o viés de municípios grandes registrarem naturalmente mais focos |
-| **Condição climática (El Niño / La Niña)** | Ajusta o risco em anos atípicos de seca, evitando que o modelo se "engane" em anos extremos |
-
-> 🚧 **PENDENTE:** documentar o modelo final escolhido, hiperparâmetros e métricas de avaliação (ex.: ROC-AUC, Log Loss) quando o pipeline estiver consolidado.
 
 ---
 
