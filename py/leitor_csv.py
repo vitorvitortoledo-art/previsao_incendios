@@ -1,7 +1,7 @@
-import pandas as pd
-import os
 
 def ler_csvs_inbe():
+    import pandas as pd
+    import os
     pasta = r'C:\Users\vitor\OneDrive\Documentos\Github\previsao_incendios\dados\focos_br_todos-sats_2023.csv'
     arquivos = os.listdir(pasta)
     dfs = []
