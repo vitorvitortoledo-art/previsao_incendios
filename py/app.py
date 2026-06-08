@@ -50,12 +50,11 @@ tab_mapa, tab_previsao, tab_graficos = st.tabs(["🗺️ Mapa de Risco", "📝 P
 with tab_mapa:
     st.subheader(f"Intensidade de Fogo Prevista (FRP) — Semana atual")
 
-    municipios_ordenados = sorted(df_mapa['municipio'].unique())
-    municipio_filtro = st.selectbox("Filtrar por município", [""] + municipios_ordenados)
+    estado_filtro = st.selectbox("Filtrar por estado", [""] + sorted(df_mapa['estado'].unique()))
 
     df_map_filtrado = df_mapa.copy()
-    if municipio_filtro:
-        df_map_filtrado = df_map_filtrado[df_map_filtrado['municipio'] == municipio_filtro]
+    if estado_filtro:
+        df_map_filtrado = df_map_filtrado[df_map_filtrado['estado'] == estado_filtro]
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Municípios", len(df_map_filtrado))
@@ -102,10 +101,7 @@ with tab_previsao:
     col_esq, col_dir = st.columns([1, 1])
 
     with col_esq:
-        semana_input = st.slider("Semana do ano", 1, 52, int(datetime.now().isocalendar().week))
-        mes_input = st.selectbox("Mês", options=range(1, 13),
-                                 format_func=lambda x: meses_pt[x - 1],
-                                 index=datetime.now().month - 1)
+        data_input = st.date_input("Data", datetime.now())
         bioma_input = st.selectbox("Bioma", biomas)
 
     with col_dir:
@@ -113,6 +109,8 @@ with tab_previsao:
         dias_sem_chuva = st.number_input("Dias sem chuva (máx)", 0, 365, 5, step=1)
 
     if st.button("🔮 Prever Intensidade", type="primary", width='stretch'):
+        mes_input = data_input.month
+        semana_input = data_input.isocalendar().week
         semana_sin = np.sin(2 * np.pi * semana_input / 52)
         semana_cos = np.cos(2 * np.pi * semana_input / 52)
         mes_sin = np.sin(2 * np.pi * mes_input / 12)
@@ -133,7 +131,7 @@ with tab_previsao:
         col_res1, col_res2, col_res3 = st.columns(3)
         col_res1.metric("FRP Previsto", f"{frp_pred:.2f}")
         col_res2.metric("Classificação", risco)
-        col_res3.metric("Semana", semana_input)
+        col_res3.metric("Data", data_input.strftime("%d/%m/%Y"))
 
         pct = min(frp_pred / limiares['alto'], 1.0)
         st.progress(float(pct))
