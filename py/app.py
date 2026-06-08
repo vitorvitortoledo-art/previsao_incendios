@@ -93,6 +93,12 @@ with tab_mapa:
 with tab_previsao:
     st.subheader("Insira os parâmetros para prever a intensidade do fogo")
 
+    municipios_pred = sorted(df_mapa['municipio'].unique())
+    municipio_sel = st.selectbox("Selecione o município", [""] + municipios_pred)
+
+    lat_pred = df_mapa.loc[df_mapa['municipio'] == municipio_sel, 'latitude'].values[0] if municipio_sel else -15.0
+    lon_pred = df_mapa.loc[df_mapa['municipio'] == municipio_sel, 'longitude'].values[0] if municipio_sel else -50.0
+
     col_esq, col_dir = st.columns([1, 1])
 
     with col_esq:
@@ -105,7 +111,6 @@ with tab_previsao:
     with col_dir:
         precip_input = st.number_input("Precipitação total (mm)", 0.0, 300.0, 30.0, step=1.0)
         dias_sem_chuva = st.number_input("Dias sem chuva (máx)", 0, 365, 5, step=1)
-        municipio_filtro = st.selectbox("Filtrar por município", [""] + municipios_ordenados)
 
     if st.button("🔮 Prever Intensidade", type="primary", width='stretch'):
         semana_sin = np.sin(2 * np.pi * semana_input / 52)
@@ -118,7 +123,7 @@ with tab_previsao:
             mes_input, mes_sin, mes_cos,
             semana_sin, semana_cos,
             precip_input, dias_sem_chuva,
-            bioma_encoded
+            bioma_encoded, lat_pred, lon_pred
         ]], columns=feature_cols)
 
         frp_pred = model.predict(features.astype(float))[0]
