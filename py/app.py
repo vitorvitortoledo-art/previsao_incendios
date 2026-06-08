@@ -8,13 +8,13 @@ from datetime import datetime
 import os
 
 st.set_page_config(
-    page_title="Previsão de Incêndios - Brasil",
+    page_title="Previsão de Incêndios - Brasil (FRP)",
     page_icon="🔥",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-MODELO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modelo')
+MODELO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'modelo_frp')
 
 @st.cache_data
 def carregar_artefatos():
@@ -22,29 +22,33 @@ def carregar_artefatos():
     encoders = joblib.load(os.path.join(MODELO_DIR, 'label_encoders.pkl'))
     biomas = joblib.load(os.path.join(MODELO_DIR, 'biomas_list.pkl'))
     feature_importance = joblib.load(os.path.join(MODELO_DIR, 'feature_importance.pkl'))
-    corr_matrix = joblib.load(os.path.join(MODELO_DIR, 'corr_matrix.pkl'))
+    feature_cols = joblib.load(os.path.join(MODELO_DIR, 'feature_cols.pkl'))
     chart_biomas = joblib.load(os.path.join(MODELO_DIR, 'chart_biomas.pkl'))
     chart_meses = joblib.load(os.path.join(MODELO_DIR, 'chart_meses.pkl'))
     chart_estados = joblib.load(os.path.join(MODELO_DIR, 'chart_estados.pkl'))
-    feature_cols = joblib.load(os.path.join(MODELO_DIR, 'feature_cols.pkl'))
+    limiares = joblib.load(os.path.join(MODELO_DIR, 'limiares_risco.pkl'))
     mapa = pd.read_csv(os.path.join(MODELO_DIR, 'mapa_previsoes.csv'))
-    return model, encoders, biomas, feature_importance, corr_matrix, chart_biomas, chart_meses, chart_estados, feature_cols, mapa
+    return model, encoders, biomas, feature_importance, feature_cols, chart_biomas, chart_meses, chart_estados, limiares, mapa
 
-model, encoders, biomas, feature_importance, corr_matrix, chart_biomas, chart_meses, chart_estados, feature_cols, df_mapa = carregar_artefatos()
+model, encoders, biomas, feature_importance, feature_cols, chart_biomas, chart_meses, chart_estados, limiares, df_mapa = carregar_artefatos()
 
 meses_pt = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
             'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
-st.title("🔥 Previsão de Incêndios no Brasil")
-st.markdown("Modelo XGBoost treinado com dados de satélite (INPE) para prever probabilidade de focos de incêndio.")
+def categorizar_risco(frp):
+    if frp < limiares['baixo']:
+        return 'Baixo'
+    elif frp < limiares['alto']:
+        return 'Médio'
+    return 'Alto'
 
-tab_mapa, tab_previsao, tab_graficos = st.tabs(["🗺️ Mapa de Calor", "📝 Previsão Manual", "📊 Gráficos"])
+st.title("🔥 Previsão de Intensidade de Incêndios (FRP)")
+st.markdown("Modelo XGBoost Regressor treinado com dados de satélite INPE. Prediz o **FRP (Fire Radiative Power)** médio esperado.")
 
-# ============================================================
-# TAB 1: MAPA DE CALOR
-# ============================================================
+tab_mapa, tab_previsao, tab_graficos = st.tabs(["🗺️ Mapa de Risco", "📝 Previsão Manual", "📊 Análises"])
+
 with tab_mapa:
-    st.subheader(f"Probabilidade de Incêndio — Semana {df_mapa['semana'].iloc[0]} (próxima semana)")
+    st.subheader(f"Intensidade de Fogo Prevista (FRP) — Semana atual")
 
     estados_list = sorted(df_mapa['estado'].unique())
     estado_filtro = st.multiselect("Filtrar por estado", estados_list, default=[])
@@ -55,37 +59,39 @@ with tab_mapa:
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Municípios", len(df_map_filtrado))
-    col2.metric("Risco Alto (>75%)", f"{(df_map_filtrado['probabilidade'] > 0.75).sum()}")
-    col3.metric("Risco Baixo (<25%)", f"{(df_map_filtrado['probabilidade'] < 0.25).sum()}")
+    col2.metric("Risco Alto", f"{(df_map_filtrado['risco'] == 'Alto').sum()}")
+    col3.metric("Risco Baixo", f"{(df_map_filtrado['risco'] == 'Baixo').sum()}")
 
     fig_mapa = px.scatter_map(
         df_map_filtrado,
         lat='latitude',
         lon='longitude',
-        color='probabilidade',
-        size='probabilidade',
-        size_max=12,
-        color_continuous_scale=px.colors.sequential.YlOrRd,
-        range_color=[0, 1],
+        color='frp_previsto',
+        size='frp_previsto',
+        size_max=14,
+        color_continuous_scale='YlOrRd',
         hover_name='municipio',
-        hover_data={'estado': True, 'probabilidade': ':.1%', 'latitude': False, 'longitude': False},
+        hover_data={
+            'estado': True,
+            'frp_previsto': ':.1f',
+            'risco': True,
+            'latitude': False,
+            'longitude': False
+        },
         map_style='carto-darkmatter',
         zoom=3,
         center={'lat': -14.2, 'lon': -51.9},
-        title='Probabilidade de Incêndio por Município'
+        title='Intensidade de Fogo Prevista (FRP) por Município'
     )
     fig_mapa.update_layout(
         height=650,
         margin=dict(l=0, r=0, t=30, b=0),
-        coloraxis_colorbar=dict(title="Probabilidade", tickformat=".0%")
+        coloraxis_colorbar=dict(title="FRP previsto")
     )
     st.plotly_chart(fig_mapa, width='stretch')
 
-# ============================================================
-# TAB 2: PREVISÃO MANUAL
-# ============================================================
 with tab_previsao:
-    st.subheader("Insira os parâmetros para prever a probabilidade de incêndio")
+    st.subheader("Insira os parâmetros para prever a intensidade do fogo")
 
     col_esq, col_dir = st.columns([1, 1])
 
@@ -99,43 +105,48 @@ with tab_previsao:
     with col_dir:
         precip_input = st.number_input("Precipitação total (mm)", 0.0, 300.0, 30.0, step=1.0)
         dias_sem_chuva = st.number_input("Dias sem chuva (máx)", 0, 365, 5, step=1)
+        lat_input = st.number_input("Latitude", -33.0, 5.0, -15.0, step=0.1)
+        lon_input = st.number_input("Longitude", -74.0, -34.0, -50.0, step=0.1)
 
-    if st.button("🔮 Prever Probabilidade", type="primary", use_container_width=True):
+    if st.button("🔮 Prever Intensidade", type="primary", width='stretch'):
         semana_sin = np.sin(2 * np.pi * semana_input / 52)
         semana_cos = np.cos(2 * np.pi * semana_input / 52)
+        mes_sin = np.sin(2 * np.pi * mes_input / 12)
+        mes_cos = np.cos(2 * np.pi * mes_input / 12)
         bioma_encoded = encoders['bioma'].transform([bioma_input])[0]
 
         features = pd.DataFrame([[
-            mes_input, precip_input, dias_sem_chuva,
-            bioma_encoded, semana_sin, semana_cos
+            mes_input, mes_sin, mes_cos,
+            semana_sin, semana_cos,
+            precip_input, dias_sem_chuva,
+            bioma_encoded, lat_input, lon_input
         ]], columns=feature_cols)
 
-        prob = model.predict_proba(features.astype(float))[0][1]
-        classe = "🔥 Alto risco" if prob >= 0.5 else "✅ Baixo risco"
+        frp_pred = model.predict(features.astype(float))[0]
+        risco = categorizar_risco(frp_pred)
 
         st.markdown("---")
         col_res1, col_res2, col_res3 = st.columns(3)
-        col_res1.metric("Probabilidade", f"{prob:.1%}")
-        col_res2.metric("Classificação", classe)
+        col_res1.metric("FRP Previsto", f"{frp_pred:.2f}")
+        col_res2.metric("Classificação", risco)
         col_res3.metric("Semana", semana_input)
 
-        st.progress(float(prob))
+        pct = min(frp_pred / limiares['alto'], 1.0)
+        st.progress(float(pct))
 
-        if prob >= 0.75:
-            st.error("⚠️ Probabilidade alta de incêndio. Recomenda-se monitoramento intensivo.")
-        elif prob >= 0.5:
-            st.warning("⚠️ Probabilidade moderada de incêndio. Mantenha atenção.")
+        if risco == 'Alto':
+            st.error("⚠️ Risco ALTO de incêndio intenso. Monitoramento prioritário.")
+        elif risco == 'Médio':
+            st.warning("⚠️ Risco MÉDIO. Mantenha atenção.")
         else:
-            st.success("✅ Baixa probabilidade de incêndio.")
+            st.success("✅ Risco BAIXO de incêndio intenso.")
 
-# ============================================================
-# TAB 3: GRÁFICOS
-# ============================================================
 with tab_graficos:
-    st.subheader("📊 Análises Exploratórias dos Dados de Focos de Incêndio (INPE)")
+    st.subheader("📊 Análise Exploratória dos Focos de Incêndio (INPE)")
+    st.caption("Dados reais de satélite — todas as ocorrências de 2023 a 2025")
 
-    aba1, aba2, aba3, aba4, aba5 = st.tabs(
-        ["Biomas", "Meses", "Estados", "Correlação", "Feature Importance"]
+    aba1, aba2, aba3, aba4 = st.tabs(
+        ["Biomas", "Meses", "Estados", "Feature Importance"]
     )
 
     cores_neon = ['#8B0000', '#B22222', '#FF4500', '#FF6347', '#FFD700', '#FFFF00']
@@ -146,7 +157,7 @@ with tab_graficos:
             color=chart_biomas.index,
             color_discrete_sequence=cores_neon[:len(chart_biomas)],
             labels={'x': 'Bioma', 'y': 'Número de Focos'},
-            title='Biomas com mais focos de incêndio'
+            title='Focos de incêndio por Bioma'
         )
         fig.update_layout(showlegend=False, height=500)
         st.plotly_chart(fig, width='stretch')
@@ -157,7 +168,7 @@ with tab_graficos:
             color=chart_meses.index.astype(str),
             color_discrete_sequence=cores_neon * 2,
             labels={'x': 'Mês', 'y': 'Número de Focos'},
-            title='Meses com mais focos de incêndio'
+            title='Focos de incêndio por Mês'
         )
         fig2.update_layout(showlegend=False, height=500)
         st.plotly_chart(fig2, width='stretch')
@@ -169,41 +180,22 @@ with tab_graficos:
             estados_df, x='estado', y='focos',
             color='estado',
             color_discrete_sequence=px.colors.sequential.YlOrRd_r,
-            title='Estados com mais focos de incêndio'
+            title='Focos de incêndio por Estado'
         )
         fig3.update_layout(showlegend=False, height=600, xaxis_tickangle=-90)
         st.plotly_chart(fig3, width='stretch')
 
     with aba4:
-        var_names = {
-            'incendio_total': 'Total Incêndios',
-            'risco_fogo_medio': 'Risco Fogo Médio',
-            'precipitacao_total': 'Precipitação Total',
-            'dias_sem_chuva_max': 'Dias sem Chuva (máx)'
-        }
-        corr_renamed = corr_matrix.rename(index=var_names, columns=var_names)
-        fig4 = px.imshow(
-            corr_renamed.values,
-            x=corr_renamed.columns, y=corr_renamed.index,
-            text_auto='.2f',
-            color_continuous_scale='RdBu_r',
-            title='Mapa de Correlação',
-            zmin=-1, zmax=1
-        )
-        fig4.update_layout(height=500)
-        st.plotly_chart(fig4, width='stretch')
-
-    with aba5:
         fig5 = px.bar(
             feature_importance, x='importance', y='feature',
             orientation='h',
             color='importance',
             color_continuous_scale='YlOrRd',
-            title='Importância das Features (XGBoost)',
+            title='Features que mais influenciam o FRP (XGBoost)',
             labels={'importance': 'Importância', 'feature': 'Feature'}
         )
-        fig5.update_layout(height=400)
+        fig5.update_layout(height=500)
         st.plotly_chart(fig5, width='stretch')
 
 st.markdown("---")
-st.caption("Dados: INPE (Programa Queimadas) • Modelo: XGBoost • Desenvolvido com Streamlit")
+st.caption(f"Dados: INPE (Programa Queimadas) • Modelo: XGBoost Regressor (FRP) • Limiares: < {limiares['baixo']:.1f} Baixo / {limiares['baixo']:.1f}-{limiares['alto']:.1f} Médio / > {limiares['alto']:.1f} Alto")
