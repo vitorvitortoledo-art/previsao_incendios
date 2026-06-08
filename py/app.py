@@ -95,14 +95,21 @@ with tab_previsao:
     municipios_pred = sorted(df_mapa['municipio'].unique())
     municipio_sel = st.selectbox("Selecione o município", [""] + municipios_pred)
 
-    lat_pred = df_mapa.loc[df_mapa['municipio'] == municipio_sel, 'latitude'].values[0] if municipio_sel else -15.0
-    lon_pred = df_mapa.loc[df_mapa['municipio'] == municipio_sel, 'longitude'].values[0] if municipio_sel else -50.0
+    if municipio_sel:
+        mun_data = df_mapa[df_mapa['municipio'] == municipio_sel].iloc[0]
+        lat_pred = mun_data['latitude']
+        lon_pred = mun_data['longitude']
+        bioma_default = biomas.index(mun_data['bioma']) if mun_data['bioma'] in biomas else 0
+    else:
+        lat_pred = -15.0
+        lon_pred = -50.0
+        bioma_default = 0
 
     col_esq, col_dir = st.columns([1, 1])
 
     with col_esq:
         data_input = st.date_input("Data", datetime.now())
-        bioma_input = st.selectbox("Bioma", biomas)
+        bioma_input = st.selectbox("Bioma", biomas, index=bioma_default)
 
     with col_dir:
         precip_input = st.number_input("Precipitação total (mm)", 0.0, 300.0, 30.0, step=1.0)
