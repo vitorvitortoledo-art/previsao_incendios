@@ -50,12 +50,12 @@ tab_mapa, tab_previsao, tab_graficos = st.tabs(["🗺️ Mapa de Risco", "📝 P
 with tab_mapa:
     st.subheader(f"Intensidade de Fogo Prevista (FRP) — Semana atual")
 
-    estados_list = sorted(df_mapa['estado'].unique())
-    estado_filtro = st.multiselect("Filtrar por estado", estados_list, default=[])
+    municipios_ordenados = sorted(df_mapa['municipio'].unique())
+    municipio_filtro = st.selectbox("Filtrar por município", [""] + municipios_ordenados)
 
     df_map_filtrado = df_mapa.copy()
-    if estado_filtro:
-        df_map_filtrado = df_map_filtrado[df_map_filtrado['estado'].isin(estado_filtro)]
+    if municipio_filtro:
+        df_map_filtrado = df_map_filtrado[df_map_filtrado['municipio'] == municipio_filtro]
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Municípios", len(df_map_filtrado))
@@ -105,8 +105,7 @@ with tab_previsao:
     with col_dir:
         precip_input = st.number_input("Precipitação total (mm)", 0.0, 300.0, 30.0, step=1.0)
         dias_sem_chuva = st.number_input("Dias sem chuva (máx)", 0, 365, 5, step=1)
-        lat_input = st.number_input("Latitude", -33.0, 5.0, -15.0, step=0.1)
-        lon_input = st.number_input("Longitude", -74.0, -34.0, -50.0, step=0.1)
+        municipio_filtro = st.selectbox("Filtrar por município", [""] + municipios_ordenados)
 
     if st.button("🔮 Prever Intensidade", type="primary", width='stretch'):
         semana_sin = np.sin(2 * np.pi * semana_input / 52)
@@ -119,7 +118,7 @@ with tab_previsao:
             mes_input, mes_sin, mes_cos,
             semana_sin, semana_cos,
             precip_input, dias_sem_chuva,
-            bioma_encoded, lat_input, lon_input
+            bioma_encoded
         ]], columns=feature_cols)
 
         frp_pred = model.predict(features.astype(float))[0]
