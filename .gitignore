@@ -170,6 +170,15 @@ cython_debug/
 # Ruff stuff:
 .ruff_cache/
 
+# Dados brutos (grandes demais para git)
+dados/
+
+# Modelos antigos
+py/modelo/
+
+# Notebook auxiliar
+py/auxiliar.ipynb
+
 # PyPI configuration file
 .pypirc
 
