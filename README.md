@@ -118,7 +118,6 @@ previsao_incendios/
 
 ---
 
-<!-- aqui eu fiquei na duvida se colocamos assim ou eu faço um sobre para informar que é um projeto de faculdade e colocar os nomes dos responsáveis
 
 ## Equipe
 
@@ -129,11 +128,11 @@ previsao_incendios/
 | Letícia Santos | 572591 |
 | Paulo Moraes | 572297 |
 
--->
 
 ## Links
 
-- **Dashboard:** 🚧 *pendente*
+- **Dashboard:** 
+https://claude.ai/public/artifacts/e7bdc2f6-ccf9-4cf0-a6dd-900eb074cf20
 
 ---
 
