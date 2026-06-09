@@ -157,4 +157,6 @@ https://claude.ai/public/artifacts/e7bdc2f6-ccf9-4cf0-a6dd-900eb074cf20
 
 ## Licença
 
-> 🚧 **PENDENTE:**
+> Este projeto foi desenvolvido para fins acadêmicos como parte das atividades do curso de Data Science da FIAP.
+
+Os dados utilizados pertencem às respectivas instituições fornecedoras (INPE, INMET, IBGE, MapBiomas e outras fontes públicas citadas). O código-fonte e a documentação deste repositório destinam-se a fins educacionais, de pesquisa e demonstração.
