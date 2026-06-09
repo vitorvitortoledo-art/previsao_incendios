@@ -66,20 +66,42 @@ O INPE já oferece o **Risco de Fogo (RF)**, um indicador meteorológico robusto
 
 ## Estrutura do repositório
 
-> 🚧 **PENDENTE:** a estrutura abaixo reflete o estado atual e deve ser atualizada conforme o código for organizado em módulos.
-
 ```
 previsao_incendios/
-├── assets/                     # Logo e recursos visuais
-├── dados/                      # CSVs do BDQueimadas/INPE e dados de apoio (IBGE) — não versionados
-├── leitor_csv.py               # Função de carregamento dos CSVs em chunks
-├── tratamentos_files.ipynb     # Limpeza, correção de encoding e features temporais
-├── auxiliar.ipynb              # Pipeline: agregação, features, balanceamento e treino do modelo
+├── py/
+│   ├── auxiliar/
+│   │   └── auxiliar.ipynb
+│   │
+│   ├── modelo_frp/
+│   │   ├── biomas_list.pkl
+│   │   ├── chart_biomas.pkl
+│   │   ├── chart_estados.pkl
+│   │   ├── chart_meses.pkl
+│   │   ├── feature_cols.pkl
+│   │   ├── feature_importance.pkl
+│   │   ├── label_encoders.pkl
+│   │   ├── limiares_risco.pkl
+│   │   ├── mapa_previsoes.csv
+│   │   ├── municipio_info.pkl
+│   │   └── xgb_model.pkl
+│   │
+│   ├── app.py
+│   └── treinar_modelo_frp.py
+│
+├── README.md
+├── requirements.txt
 ├── .gitignore
-└── README.md
+├── seiva_logo_03_territorio.png
+└── seiva_logo_03_territorio_card.png
 ```
 
- <!-- vale a pena colocar essa parte ou os repositórios falam por si só?
+### Organização
+
+- `app.py` — aplicação principal para visualização das previsões.
+- `treinar_modelo_frp.py` — treinamento e geração do modelo de previsão.
+- `auxiliar.ipynb` — exploração, limpeza e preparação dos dados.
+- `modelo_frp/` — artefatos do modelo treinado (XGBoost, encoders, métricas e arquivos auxiliares).
+
  ---
 
  ## Fontes de dados
@@ -90,12 +112,10 @@ previsao_incendios/
 - **MapBiomas** (referência de contexto): https://plataforma.brasil.mapbiomas.org/
 
 > Os arquivos de dados **não** são versionados no repositório devido ao volume. Baixe-os nas fontes acima e coloque-os na pasta `dados/`.
--->
+
 ---
 
 ## Como executar
-
-> **PENDENTE:** instruções refletem o estado atual (notebooks). Serão revisadas quando o pipeline for modularizado e o dashboard/alerta forem incorporados.
 
 1. **Clone o repositório**
    ```bash
@@ -107,8 +127,7 @@ previsao_incendios/
    ```bash
    pip install pandas numpy matplotlib seaborn scikit-learn imbalanced-learn xgboost jupyter
    ```
-   <!-- 🚧 PENDENTE: substituir por `pip install -r requirements.txt` quando o arquivo for criado -->
-
+  
 3. **Adicione os dados**
    Coloque os arquivos de focos do INPE (e dados de apoio) dentro da pasta `dados/`.
 
